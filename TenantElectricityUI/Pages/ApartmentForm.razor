@@ -1,75 +1,83 @@
-﻿@page "/apartment-form"
-@page "/apartments/add"
-@page "/apartments/edit/{Id:int}"
-@using TenantElectricityUI.Services
+﻿@page "/apartmentform/{Id:int?}"
+@inject HttpClient Http
+@inject NavigationManager Navigation
 @using TenantElectricity.Shared.Models
-@inject ApartmentService ApartmentService
-@inject NavigationManager NavigationManager
 
-<h3>@(Id == 0 ? "Add Apartment" : "Edit Apartment")</h3>
+<h3>@(apartment.Id == 0 ? "Add Apartamentos" : "Editar Apartamentos")</h3>
 
-<EditForm Model="apartment" OnValidSubmit="HandleSubmit">
+<!-- Mensaje de feedback -->
+<p style="color: green;">@statusMessage</p>
+
+<EditForm Model="@apartment" OnValidSubmit="HandleSubmit">
     <DataAnnotationsValidator />
     <ValidationSummary />
 
-    <div class="mb-3">
-        <label class="form-label">Apartment Number</label>
-        <InputText class="form-control" @bind-Value="apartment.ApartmentNumber" />
+    <div>
+        <label>Numero de Apartamento:</label>
+        <InputText @bind-Value="apartment.ApartmentNumber" />
     </div>
-    <div class="mb-3">
-        <label class="form-label">Owner Name</label>
-        <InputText class="form-control" @bind-Value="apartment.OwnerName" />
+    <div>
+        <label>Propietario:</label>
+        <InputText @bind-Value="apartment.OwnerName" />
     </div>
-    <div class="mb-3">
-        <label class="form-label">Phone</label>
-        <InputText class="form-control" @bind-Value="apartment.Phone" />
+    <div>
+        <label>Telefono:</label>
+        <InputText @bind-Value="apartment.Phone" />
     </div>
-
-    <button class="btn btn-primary" type="submit">Save</button>
-    <button class="btn btn-secondary" type="button" @onclick="NavigateBack">Cancel</button>
+    <button type="submit">Guardar</button>
+    <button class="cancel" @onclick="Cancel">Cancelar</button>
 </EditForm>
 
-@if (!string.IsNullOrEmpty(errorMessage))
-{
-    <p class="text-danger">@errorMessage</p>
-}
-
 @code {
-    [Parameter] public int Id { get; set; }
     private Apartment apartment = new();
-    private string? errorMessage;
+    private string statusMessage = string.Empty; // Variable para el mensaje
+
+    [Parameter]
+    public int? Id { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
-        if (Id != 0)
+        if (Id.HasValue)
         {
-            try
+            var response = await Http.GetAsync($"api/apartment/{Id}");
+            if (response.IsSuccessStatusCode)
             {
-                apartment = await ApartmentService.GetApartmentByIdAsync(Id);
+                apartment = await response.Content.ReadFromJsonAsync<Apartment>();
             }
-            catch (Exception ex)
+            else
             {
-                errorMessage = $"Failed to load apartment: {ex.Message}";
+                Navigation.NavigateTo("/apartments");
             }
         }
     }
 
     private async Task HandleSubmit()
     {
-        if (Id == 0)
+        try
         {
-            await ApartmentService.CreateApartmentAsync(apartment); // Verifica el modelo aquí
-        }
-        else
-        {
-            await ApartmentService.UpdateApartmentAsync(Id, apartment);
-        }
+            if (apartment.Id == 0)
+            {
+                await Http.PostAsJsonAsync("api/apartment", apartment);
+                statusMessage = "Apartment added successfully!";
+            }
+            else
+            {
+                await Http.PutAsJsonAsync($"api/apartment/{apartment.Id}", apartment);
+                statusMessage = "Apartment updated successfully!";
+            }
 
-        NavigationManager.NavigateTo("/apartments");
+            // Navega de regreso a la lista después de un breve retraso
+            await Task.Delay(1500); // Opcional, para que el usuario vea el mensaje
+            Navigation.NavigateTo("/apartments");
+        }
+        catch (Exception ex)
+        {
+            statusMessage = $"Error: {ex.Message}";
+        }
     }
 
-    private void NavigateBack()
+    private void Cancel()
     {
-        NavigationManager.NavigateTo("/apartments");
+        Navigation.NavigateTo("/apartments");
     }
 }

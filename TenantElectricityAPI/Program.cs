@@ -11,10 +11,12 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowBlazor",
-        policy => policy.WithOrigins("https://localhost:7081/") // URL de tu Blazor WebAssembly
+        policy => policy.WithOrigins("https://localhost:7081") // URL de tu Blazor WebAssembly
                         .AllowAnyHeader()
                         .AllowAnyMethod());
 });
+
+
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -23,18 +25,14 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
+app.UseCors("AllowBlazor");
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
-app.UseCors(policy =>
-    policy.AllowAnyOrigin()
-          .AllowAnyMethod()
-          .AllowAnyHeader());
-
 
 app.UseCors("AllowBlazor");
 

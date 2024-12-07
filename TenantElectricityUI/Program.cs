@@ -10,8 +10,9 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 // Configura HttpClient para consumir la API
 builder.Services.AddScoped(sp => new HttpClient
 {
-    BaseAddress = new Uri("https://localhost:7190/api/") // Cambia a la URL base de tu API
+    BaseAddress = new Uri("https://localhost:7190") // Cambia a la URL base de tu API
 });
+
 builder.Services.AddScoped<ApartmentService>();
 
 await builder.Build().RunAsync();

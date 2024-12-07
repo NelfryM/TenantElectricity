@@ -1,0 +1,57 @@
+﻿@page "/apartments"
+@inject HttpClient Http
+@using TenantElectricity.Shared.Models
+@inject NavigationManager Navigation
+
+<h3>Lista de Apartamentos</h3>
+
+<button class="add" @onclick="AddApartment">Añadir</button>
+<table>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Numero de apartamento</th>
+            <th>Propietario</th>
+            <th>Telefono</th>
+            <th>Accion</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var apartment in apartments)
+        {
+            <tr>
+                <td>@apartment.Id</td>
+                <td>@apartment.ApartmentNumber</td>
+                <td>@apartment.OwnerName</td>
+                <td>@apartment.Phone</td>
+                <td>
+                    <button class="edit" @onclick="() => EditApartment(apartment)">Editar</button>
+                    <button class="delete" @onclick="() => DeleteApartment(apartment.Id)">Borrar</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private List<Apartment> apartments = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        apartments = await Http.GetFromJsonAsync<List<Apartment>>("api/apartment");
+    }
+
+    private void AddApartment()
+    {
+        Navigation.NavigateTo("/apartmentform");
+    }
+    private void EditApartment(Apartment apartment)
+    {
+        Navigation.NavigateTo($"/apartmentform/{apartment.Id}");
+    }
+    private async Task DeleteApartment(int id)
+    {
+        await Http.DeleteAsync($"api/apartment/{id}");
+        apartments = await Http.GetFromJsonAsync<List<Apartment>>("api/apartment");
+    }
+}

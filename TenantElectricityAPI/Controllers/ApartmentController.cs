@@ -4,6 +4,8 @@ using Microsoft.EntityFrameworkCore;
 using TenantElectricityAPI.Data;
 using TenantElectricity.Shared.Models;
 
+
+
 namespace TenantElectricityAPI.Controllers
 {
     [Route("api/[controller]")]
