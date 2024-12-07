@@ -1,0 +1,99 @@
+﻿@page "/apartments"
+@using TenantElectricityUI.Services
+@using TenantElectricity.Shared.Models
+@inject ApartmentService ApartmentService
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+
+<h3>Apartments</h3>
+<button class="btn btn-primary my-3" @onclick="AddApartment">Add Apartment</button>
+
+@if (apartments == null)
+{
+    <p><em>Loading...</em></p>
+}
+else if (apartments.Count == 0)
+{
+    <p>No apartments found.</p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Apartment Number</th>
+                <th>Owner Name</th>
+                <th>Phone</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var apartment in apartments)
+            {
+                <tr>
+                    <td>@apartment.ApartmentNumber</td>
+                    <td>@apartment.OwnerName</td>
+                    <td>@apartment.Phone</td>
+                    <td>
+                        <button class="btn btn-warning btn-sm" @onclick="() => EditApartment(apartment.Id)">Edit</button>
+                        <button class="btn btn-danger btn-sm" @onclick="() => ConfirmDelete(apartment.Id)">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<Apartment>? apartments;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadApartmentsAsync();
+    }
+
+    private async Task LoadApartmentsAsync()
+    {
+        try
+        {
+            apartments = await ApartmentService.GetApartmentsAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to load apartments: {ex.Message}";
+        }
+    }
+
+    private void AddApartment()
+    {
+        NavigationManager.NavigateTo("/apartments/add");
+    }
+
+    private void EditApartment(int id)
+    {
+        NavigationManager.NavigateTo($"/apartments/edit/{id}");
+    }
+
+    private async Task ConfirmDelete(int id)
+    {
+        var confirm = await JSRuntime.InvokeAsync<bool>("confirm", new object[] { "Are you sure you want to delete this apartment?" });
+        if (confirm)
+        {
+            await DeleteApartmentAsync(id);
+        }
+    }
+
+    private async Task DeleteApartmentAsync(int id)
+    {
+        try
+        {
+            await ApartmentService.DeleteApartmentAsync(id);
+            await LoadApartmentsAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to delete apartment: {ex.Message}";
+        }
+    }
+}
